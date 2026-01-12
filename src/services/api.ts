@@ -30,3 +30,16 @@ export const crawlFromUrl = async (url: string): Promise<{ success: boolean, man
   return data;
 };
 
+export const crawlChapterRange = async (
+  mangaId: string, 
+  startChapterId: string, 
+  endChapterId: string
+): Promise<{ success: boolean, message: string, crawledCount: number }> => {
+  const { data } = await api.post('/crawl-chapter-range', { 
+    mangaId, 
+    startChapterId, 
+    endChapterId 
+  });
+  return data;
+};
+
