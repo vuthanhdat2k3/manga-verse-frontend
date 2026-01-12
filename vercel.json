@@ -7,9 +7,6 @@
       "use": "@vercel/next"
     }
   ],
-  "env": {
-    "NEXT_PUBLIC_API_URL": "@api-url"
-  },
   "rewrites": [
     {
       "source": "/api/:path*",
