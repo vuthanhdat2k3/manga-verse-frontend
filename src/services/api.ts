@@ -1,7 +1,7 @@
 import axios from 'axios';
 import { Manga, ChapterDetail } from '@/types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://manga-verse-backend.onrender.com/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://manga-verse-1.onrender.com/api';
 
 export const api = axios.create({ baseURL: API_URL });
 
@@ -40,6 +40,11 @@ export const crawlChapterRange = async (
     startChapterId, 
     endChapterId 
   });
+  return data;
+};
+
+export const updateChapters = async (mangaId: string): Promise<Manga> => {
+  const { data } = await api.post(`/mangas/${mangaId}/update-chapters`);
   return data;
 };
 

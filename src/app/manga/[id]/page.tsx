@@ -1,7 +1,7 @@
 'use client';
 import { useState, useMemo } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { getMangaDetail, crawlChapterRange } from '@/services/api';
+import { useQuery, useQueryClient } from '@tanstack/react-query';
+import { getMangaDetail, crawlChapterRange, updateChapters } from '@/services/api';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
@@ -16,7 +16,8 @@ import {
   ChevronUp,
   Loader2,
   CheckCircle2,
-  X
+  X,
+  RefreshCw 
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -26,6 +27,7 @@ import { useToast } from '@/hooks/use-toast';
 export default function MangaDetail() {
   const params = useParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
   const id = params?.id as string;
   
   // State
@@ -35,6 +37,7 @@ export default function MangaDetail() {
   const [startChapter, setStartChapter] = useState('');
   const [endChapter, setEndChapter] = useState('');
   const [isCrawling, setIsCrawling] = useState(false);
+  const [isUpdating, setIsUpdating] = useState(false);
   const { toast } = useToast();
   
   const { data: manga, isLoading, error } = useQuery({
@@ -158,6 +161,30 @@ export default function MangaDetail() {
       });
     } finally {
       setIsCrawling(false);
+    }
+  };
+
+  // Refresh chapters (Manual Update)
+  const handleRefreshChapters = async () => {
+    setIsUpdating(true);
+    try {
+      await updateChapters(id);
+      
+      toast({
+        title: "Chapters Updated",
+        description: "Successfully checked for new chapters.",
+      });
+      
+      // Invalidate cache to show new data
+      queryClient.invalidateQueries({ queryKey: ['manga', id] });
+    } catch (error: any) {
+      toast({
+        title: "Update Failed",
+        description: error?.response?.data?.message || "Failed to update chapters",
+        variant: "destructive"
+      });
+    } finally {
+      setIsUpdating(false);
     }
   };
 
@@ -320,6 +347,17 @@ export default function MangaDetail() {
               <Download className="w-4 h-4" />
               <span className="hidden sm:inline">Crawl Range</span>
               <span className="sm:hidden">Crawl</span>
+            </Button>
+            
+            <Button 
+              onClick={handleRefreshChapters}
+              className="flex items-center gap-2 h-12"
+              variant="outline"
+              disabled={isUpdating}
+            >
+              <RefreshCw className={`w-4 h-4 ${isUpdating ? 'animate-spin' : ''}`} />
+              <span className="hidden sm:inline">Refresh</span>
+              <span className="sm:hidden">Update</span>
             </Button>
           </div>
         </Card>
