@@ -9,6 +9,8 @@ import { Button } from "@/components/ui/button";
 import { Search, Link2, Loader2, AlertCircle } from 'lucide-react';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 
+import { Navbar } from '@/components/Navbar';
+
 export default function SearchPage() {
   const [keyword, setKeyword] = useState('');
   const [url, setUrl] = useState('');
@@ -49,21 +51,7 @@ export default function SearchPage() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center px-4 md:px-6">
-          <a href="/" className="flex items-center gap-2 font-bold text-2xl mr-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-500">
-            MangaVerse
-          </a>
-          <nav className="flex gap-6 text-sm font-medium">
-            <a href="/" className="text-muted-foreground hover:text-foreground transition-colors">
-              Home
-            </a>
-            <a href="/search" className="text-foreground">
-              Search
-            </a>
-          </nav>
-        </div>
-      </header>
+      <Navbar />
 
       <main className="container px-4 md:px-6 py-8 space-y-8">
         {/* Header */}

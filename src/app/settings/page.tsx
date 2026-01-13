@@ -9,6 +9,7 @@ import { Card } from '@/components/ui/card';
 import { useToast } from '@/hooks/use-toast';
 import { ArrowLeft, Save, Loader2 } from 'lucide-react';
 import Link from 'next/link';
+import { Navbar } from '@/components/Navbar';
 
 export default function SettingsPage() {
   const { toast } = useToast();
@@ -65,13 +66,12 @@ export default function SettingsPage() {
     );
   }
 
+
   return (
-    <div className="min-h-screen bg-background p-8">
-      <div className="max-w-2xl mx-auto space-y-6">
+    <div className="min-h-screen bg-background">
+      <Navbar />
+      <div className="container max-w-2xl mx-auto py-8 px-4 space-y-6">
         <div className="flex items-center gap-4">
-          <Link href="/" className="text-muted-foreground hover:text-foreground">
-            <ArrowLeft className="w-6 h-6" />
-          </Link>
           <h1 className="text-3xl font-bold">Crawler Settings</h1>
         </div>
 

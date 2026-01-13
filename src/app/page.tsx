@@ -9,6 +9,8 @@ import { useState } from 'react';
 
 import Link from 'next/link';
 
+import { Navbar } from '@/components/Navbar';
+
 export default function Home() {
   const [search, setSearch] = useState('');
   const [page, setPage] = useState(1);
@@ -21,24 +23,17 @@ export default function Home() {
 
   return (
     <div className="min-h-screen bg-background">
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center px-4 md:px-6">
-          <Link href="/" className="flex items-center gap-2 font-bold text-2xl mr-4 bg-clip-text text-transparent bg-gradient-to-r from-primary to-purple-500">
-            MangaVerse
-          </Link>
-          <nav className="hidden md:flex gap-6 text-sm font-medium mr-6">
-            <Link href="/" className="text-foreground hover:text-primary transition-colors">
-              Home
-            </Link>
-            <Link href="/search" className="text-muted-foreground hover:text-foreground transition-colors">
-              Search
-            </Link>
-            <Link href="/settings" className="text-muted-foreground hover:text-foreground transition-colors">
-              Settings
-            </Link>
-          </nav>
-          <div className="flex flex-1 items-center justify-end md:justify-center">
-             <div className="relative w-full max-w-sm">
+      <Navbar />
+
+      <main className="container px-4 md:px-6 py-8 space-y-8">
+        {/* Search Hero Section */}
+        <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+               <h2 className="text-3xl font-bold tracking-tight">Popular Updates</h2>
+               <p className="text-muted-foreground">The latest manga updates from our collection.</p>
+            </div>
+            
+            <div className="relative w-full max-w-sm">
                 <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input 
                    type="search"
@@ -48,14 +43,6 @@ export default function Home() {
                    onChange={(e) => setSearch(e.target.value)}
                 />
              </div>
-          </div>
-        </div>
-      </header>
-
-      <main className="container px-4 md:px-6 py-8 space-y-8">
-        <div>
-           <h2 className="text-3xl font-bold tracking-tight mb-2">Popular Updates</h2>
-           <p className="text-muted-foreground">The latest manga updates from our collection.</p>
         </div>
 
         {isLoading ? (
