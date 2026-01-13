@@ -2,6 +2,7 @@ import axios from 'axios';
 import { Manga, ChapterDetail } from '@/types';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://manga-verse-1.onrender.com/api';
+// const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export const api = axios.create({ baseURL: API_URL });
 
@@ -45,6 +46,22 @@ export const crawlChapterRange = async (
 
 export const updateChapters = async (mangaId: string): Promise<Manga> => {
   const { data } = await api.post(`/mangas/${mangaId}/update-chapters`);
+  return data;
+};
+
+export interface CrawlerConfig {
+  baseUrl: string;
+  mangaDetailUrlPattern: string;
+  chapterUrlPattern: string;
+}
+
+export const getConfig = async (): Promise<CrawlerConfig> => {
+  const { data } = await api.get('/config');
+  return data;
+};
+
+export const updateConfig = async (config: Partial<CrawlerConfig>): Promise<CrawlerConfig> => {
+  const { data } = await api.post('/config', config);
   return data;
 };
 
