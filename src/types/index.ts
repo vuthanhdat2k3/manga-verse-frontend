@@ -2,6 +2,7 @@ export interface Chapter {
   id: string;
   title: string;
   url: string;
+  downloaded?: boolean;
 }
 
 export interface Manga {
@@ -13,6 +14,7 @@ export interface Manga {
   status?: string;
   genres?: string[];
   chapters?: Chapter[];
+  total_chapters?: number;
   updated_at: string;
 }
 

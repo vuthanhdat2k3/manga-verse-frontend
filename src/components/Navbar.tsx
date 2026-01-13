@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Menu, Search, Settings, Home, X } from 'lucide-react';
+import { Menu, Search, Settings, Home, X, Shield } from 'lucide-react';
 import { useState } from 'react';
 import { Button } from '@/components/ui/button';
 // import { Sheet, SheetContent, SheetTrigger } from '@/components/ui/sheet'; 
@@ -18,6 +18,7 @@ export function Navbar() {
   const routes = [
     { href: '/', label: 'Home', icon: Home },
     { href: '/search', label: 'Search', icon: Search },
+    { href: '/admin', label: 'Admin', icon: Shield },
     { href: '/settings', label: 'Settings', icon: Settings },
   ];
 

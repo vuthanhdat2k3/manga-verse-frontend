@@ -1,8 +1,8 @@
 import axios from 'axios';
 import { Manga, ChapterDetail } from '@/types';
 
-const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://manga-verse-1.onrender.com/api';
-// const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
+// const API_URL = process.env.NEXT_PUBLIC_API_URL || 'https://manga-verse-1.onrender.com/api';
+const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000/api';
 
 export const api = axios.create({ baseURL: API_URL });
 
@@ -65,3 +65,13 @@ export const updateConfig = async (config: Partial<CrawlerConfig>): Promise<Craw
   return data;
 };
 
+
+export const deleteManga = async (id: string): Promise<{ success: boolean, message: string }> => {
+  const { data } = await api.delete(`/admin/mangas/${id}`);
+  return data;
+};
+
+export const deleteChapters = async (mangaId: string, chapterIds: string[]): Promise<{ success: boolean, message: string }> => {
+  const { data } = await api.delete(`/admin/mangas/${mangaId}/chapters`, { data: { chapterIds } });
+  return data;
+};

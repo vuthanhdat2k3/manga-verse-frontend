@@ -1,7 +1,7 @@
 'use client';
 import { useState, useMemo } from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
-import { getMangaDetail, crawlChapterRange, updateChapters } from '@/services/api';
+import { getMangaDetail, crawlChapterRange, updateChapters, deleteChapters } from '@/services/api';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { 
@@ -17,7 +17,9 @@ import {
   Loader2,
   CheckCircle2,
   X,
-  RefreshCw 
+  RefreshCw,
+  Trash2,
+  ArrowDownUp
 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
@@ -38,6 +40,8 @@ export default function MangaDetail() {
   const [endChapter, setEndChapter] = useState('');
   const [isCrawling, setIsCrawling] = useState(false);
   const [isUpdating, setIsUpdating] = useState(false);
+  const [resettingId, setResettingId] = useState<string | null>(null);
+  const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
   const { toast } = useToast();
   
   const { data: manga, isLoading, error } = useQuery({
@@ -62,16 +66,21 @@ export default function MangaDetail() {
   const filteredChapters = useMemo(() => {
     if (!manga?.chapters) return [];
     
-    const reversed = [...manga.chapters].reverse();
+    // Sort based on order
+    // Default manga.chapters is typically Ascending (Chap 1 -> N) in DB
+    // We default to Descending (Newest first)
+    const sorted = sortOrder === 'desc' 
+      ? [...manga.chapters].reverse() 
+      : [...manga.chapters];
     
-    if (!searchQuery.trim()) return reversed;
+    if (!searchQuery.trim()) return sorted;
     
     const query = searchQuery.toLowerCase();
-    return reversed.filter(chapter => 
+    return sorted.filter(chapter => 
       chapter.title.toLowerCase().includes(query) ||
       chapter.id.toLowerCase().includes(query)
     );
-  }, [manga?.chapters, searchQuery]);
+  }, [manga?.chapters, searchQuery, sortOrder]);
 
   // Display chapters (collapsed or full)
   const displayedChapters = useMemo(() => {
@@ -102,6 +111,37 @@ export default function MangaDetail() {
       router.push(`/manga/${id}/${lastRead}`);
     } else {
       readFirst();
+    }
+  };
+
+  // Handle Chapter Reset
+  const handleResetChapter = async (e: React.MouseEvent, chapterId: string) => {
+    e.preventDefault(); // Prevent navigation
+    e.stopPropagation();
+
+    if (!confirm('Are you sure you want to reset this chapter content? It will be re-downloaded when you read it again.')) {
+      return;
+    }
+
+    setResettingId(chapterId);
+    try {
+      await deleteChapters(id, [chapterId]);
+      
+      toast({
+        title: "Success",
+        description: "Chapter content reset successfully",
+      });
+      
+      // Invalidate cache to update UI (remove green dot)
+      queryClient.invalidateQueries({ queryKey: ['manga', id] });
+    } catch (error: any) {
+      toast({
+        title: "Error",
+        description: "Failed to reset chapter",
+        variant: "destructive"
+      });
+    } finally {
+      setResettingId(null);
     }
   };
 
@@ -379,14 +419,26 @@ export default function MangaDetail() {
               Chapters ({filteredChapters.length})
             </h2>
             
-            <div className="relative w-64">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
-              <Input
-                placeholder="Search chapters..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-9"
-              />
+            <div className="flex items-center gap-2">
+              <Button
+                variant="outline"
+                size="icon"
+                onClick={() => setSortOrder(prev => prev === 'desc' ? 'asc' : 'desc')}
+                title={`Sort ${sortOrder === 'desc' ? 'Oldest' : 'Newest'} first`}
+                className="shrink-0"
+              >
+                <ArrowDownUp className="w-4 h-4" />
+              </Button>
+              
+              <div className="relative w-64">
+                <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-muted-foreground" />
+                <Input
+                  placeholder="Search chapters..."
+                  value={searchQuery}
+                  onChange={(e) => setSearchQuery(e.target.value)}
+                  className="pl-9"
+                />
+              </div>
             </div>
           </div>
 
@@ -394,48 +446,78 @@ export default function MangaDetail() {
             {displayedChapters.map((chapter) => {
               const chapterNumber = totalChapters - manga.chapters!.indexOf(chapter);
               const isLastRead = chapter.id === lastReadChapterId;
+              const isResetting = resettingId === chapter.id;
               
               return (
-                <Link 
-                  key={chapter.id} 
-                  href={`/manga/${id}/${chapter.id}`}
-                >
-                  <div className={`
-                    p-4 rounded-lg border transition-all duration-200
-                    hover:border-primary/50 hover:bg-muted/50 hover:shadow-md
-                    flex items-center justify-between gap-4 group cursor-pointer
-                    ${isLastRead ? 'bg-primary/5 border-primary/30' : 'bg-card'}
-                  `}>
-                    <div className="flex items-center gap-3 flex-1 min-w-0">
-                      <div className={`
-                        w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold
-                        transition-colors flex-shrink-0
-                        ${isLastRead 
-                          ? 'bg-primary text-primary-foreground' 
-                          : 'bg-muted text-muted-foreground group-hover:bg-primary group-hover:text-primary-foreground'
-                        }
-                      `}>
-                        {chapterNumber}
+                <div key={chapter.id} className="relative group/item">
+                  <Link 
+                    href={`/manga/${id}/${chapter.id}`}
+                    className="block"
+                  >
+                    <div className={`
+                      p-4 rounded-lg border transition-all duration-200
+                      hover:border-primary/50 hover:bg-muted/50 hover:shadow-md
+                      flex items-center justify-between gap-4 cursor-pointer
+                      ${isLastRead ? 'bg-primary/5 border-primary/30' : 'bg-card'}
+                    `}>
+                      <div className="flex items-center gap-3 flex-1 min-w-0">
+                        <div className={`
+                          w-10 h-10 rounded-lg flex items-center justify-center text-sm font-bold
+                          transition-colors flex-shrink-0 relative
+                          ${isLastRead 
+                            ? 'bg-primary text-primary-foreground' 
+                            : 'bg-muted text-muted-foreground group-hover/item:bg-primary group-hover/item:text-primary-foreground'
+                          }
+                        `}>
+                          {chapterNumber}
+                          {/* Downloaded Indicator */}
+                          {chapter.downloaded && (
+                            <div className="absolute -top-1 -right-1 w-3 h-3 rounded-full bg-green-500 border-2 border-background shadow-[0_0_8px_rgba(34,197,94,0.6)]" title="Downloaded"></div>
+                          )}
+                        </div>
+                        
+                        <div className="flex-1 min-w-0">
+                          <span className="font-medium group-hover/item:text-primary transition-colors block truncate">
+                            {chapter.title}
+                          </span>
+                          <div className="flex items-center gap-2 mt-1">
+                             {isLastRead && (
+                               <span className="text-xs text-primary flex items-center gap-1">
+                                 <CheckCircle2 className="w-3 h-3" />
+                                 Last read
+                               </span>
+                             )}
+                             {chapter.downloaded && (
+                               <span className="text-xs text-green-500 font-medium">
+                                 Downloaded
+                               </span>
+                             )}
+                          </div>
+                        </div>
                       </div>
                       
-                      <div className="flex-1 min-w-0">
-                        <span className="font-medium group-hover:text-primary transition-colors block truncate">
-                          {chapter.title}
+                      <div className="flex items-center gap-2">
+                         {/* Reset Button (only if downloaded) */}
+                         {chapter.downloaded && (
+                           <Button
+                             variant="ghost" 
+                             size="icon"
+                             className="text-muted-foreground hover:text-destructive hover:bg-destructive/10 opacity-0 group-hover/item:opacity-100 transition-opacity"
+                             onClick={(e) => handleResetChapter(e, chapter.id)}
+                             disabled={isResetting}
+                             title="Reset Content"
+                           >
+                             {isResetting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                           </Button>
+                         )}
+
+                        <span className="text-xs text-muted-foreground group-hover/item:text-primary transition-colors">
+                          Read →
                         </span>
-                        {isLastRead && (
-                          <span className="text-xs text-primary flex items-center gap-1 mt-1">
-                            <CheckCircle2 className="w-3 h-3" />
-                            Last read
-                          </span>
-                        )}
                       </div>
                     </div>
-                    
-                    <span className="text-xs text-muted-foreground group-hover:text-primary transition-colors">
-                      Read →
-                    </span>
-                  </div>
-                </Link>
+                  </Link>
+                </div>
               );
             })}
           </div>
